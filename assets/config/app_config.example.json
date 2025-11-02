@@ -1,0 +1,13 @@
+{
+    "openai_api_key": "YOUR_API_KEY_HERE",
+    "ai": {
+        "model": "gpt-5-nano",
+        "input_prompt": "Jesteś asystentem do analizy zamówień. Przeanalizuj poniższy tekst i zwróć listę produktów oraz ich ilości w formacie JSON. Użyj kluczy 'name' (string) i 'quantity' (int). Zwróć tylko i wyłącznie tablicę JSON, bez żadnego dodatkowego tekstu wyjaśniającego.",
+        "store": false,
+        "temperature": 0.2,
+        "top_p": 1.0
+    },
+    "matching": {
+        "threshold": 0.5
+    }
+}

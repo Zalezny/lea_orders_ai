@@ -30,3 +30,11 @@ class ServerFailure extends Failure {
 class UnknownFailure extends Failure {
   const UnknownFailure(super.message);
 }
+
+class ConfigFailure extends Failure {
+  const ConfigFailure(super.message);
+}
+
+class ParsingFailure extends Failure {
+  const ParsingFailure(super.message);
+}
