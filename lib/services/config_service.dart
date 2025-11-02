@@ -47,17 +47,12 @@ class ConfigService {
       throw const ConfigException("Brak lub niepoprawna wartość 'ai.store' (bool) w assets/config/app_config.json");
     }
 
-    final temperature = _tryDouble(ai['temperature']);
-    if (temperature == null) {
-      throw const ConfigException("Brak lub niepoprawna wartość 'ai.temperature' (number) w assets/config/app_config.json");
-    }
-
     final topP = _tryDouble(ai['top_p']);
     if (topP == null) {
       throw const ConfigException("Brak lub niepoprawna wartość 'ai.top_p' (number) w assets/config/app_config.json");
     }
 
-    return AiSettings(model: model, inputPrompt: inputPrompt, store: store, temperature: temperature, topP: topP);
+    return AiSettings(model: model, inputPrompt: inputPrompt, store: store, topP: topP);
   }
 
   Future<double> get matchingThreshold async {
@@ -94,10 +89,9 @@ class AiSettings {
   final String model;
   final String inputPrompt;
   final bool store;
-  final double temperature;
   final double topP;
 
-  const AiSettings({required this.model, required this.inputPrompt, required this.store, required this.temperature, required this.topP});
+  const AiSettings({required this.model, required this.inputPrompt, required this.store, required this.topP});
 }
 
 class ConfigException implements Exception {
