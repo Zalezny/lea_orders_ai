@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 
@@ -20,17 +21,12 @@ abstract class AppModule {
         headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
       ),
     );
-    // Avoid printing sensitive headers (e.g., Authorization); keep bodies for debugging
-    dio.interceptors.add(
-      LogInterceptor(
-        request: true,
-        requestHeader: false, // don't log headers to avoid leaking Authorization
-        requestBody: true,
-        responseBody: true,
-        error: true,
-        logPrint: (obj) => logger.i(obj),
-      ),
-    );
+    if (kDebugMode) {
+      dio.interceptors.add(
+        LogInterceptor(request: true, requestHeader: false, requestBody: true, responseBody: true, error: true, logPrint: (obj) => logger.i(obj)),
+      );
+    }
+
     return dio;
   }
 

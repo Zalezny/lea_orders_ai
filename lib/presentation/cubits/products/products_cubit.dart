@@ -1,8 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
-import '../../domain/usecases/fetch_products.dart';
-import '../../domain/usecases/search_products.dart';
+import '../../../domain/usecases/fetch_products.dart';
+import '../../../domain/usecases/search_products.dart';
 import 'products_state.dart';
 
 @injectable

@@ -10,12 +10,15 @@ Aplikacja mobilna Flutter, która:
 
 ## Spis treści
 - Opis i architektura
+- Struktura projektu
+- Dlaczego layer-first (a nie feature-first)
 - Konfiguracja klucza AI (OpenAI)
 - Format pliku konfiguracyjnego
 - Uruchomienie projektu (Android/iOS)
 - Obsługa i funkcje (analiza, dopasowanie, eksport)
 - „Similarity-based matching” (opis algorytmu) + alternatywa „search-backed”
 - Testy i generatory kodu
+- Co można jeszcze doimplementować
 - FAQ / Troubleshooting
 
 ---
@@ -31,6 +34,64 @@ Aplikacja mobilna Flutter, która:
 - DI: get_it + injectable (pliki generowane: `lib/settings/injection.config.dart`)
 - Generatory: freezed (modele), json_serializable (serializacja), retrofit_generator (klienci API), injectable_generator (DI)
 - Inne: intl (formatowanie walut), path_provider (eksport do pliku), string_similarity (dopasowywanie nazw)
+
+---
+
+## Struktura projektu
+
+Najważniejsze katalogi i pliki (warstwowo):
+
+```
+lib/
+	main.dart                         # Bootstrap aplikacji
+	settings/
+		injection.dart                  # get_it + injectable konfiguracja DI
+		injection.config.dart           # PLIK GENEROWANY (nie edytować ręcznie)
+		app_module.dart                 # Moduły DI
+	presentation/                     # UI (BLoC/Cubit + widoki)
+		navigation/                     # Nawigacja / scaffolding
+		pages/
+		common/                         # Wspólne elementy UI (jeśli są)
+		cubits/                         # Cubity + stany
+	domain/                           # Logika domenowa
+		entities/                       # Encje domenowe (np. MatchedOrderItem)
+		repositories/                   # Interfejsy repozytoriów
+		usecases/                       # Use-case’y
+		core/                           # Wspólny kod domeny (np. błędy)
+	data/                             # Implementacja dostępu do danych
+		datasources/                    # Zewn. źródła danych (API itp.)
+		models/                         # DTO (freezed + json_serializable)
+		network/                        # Klienci HTTP (Dio + Retrofit)
+		repositories/                   # Implementacje repozytoriów
+	services/                         # Usługi niezwiązane z przechowywaniem
+		config_service.dart             # Odczyt configu z assets/config
+
+assets/
+	config/
+		app_config.example.json         # Przykładowy config (skopiuj jako app_config.json)
+
+test/
+	domain/                           # Testy use-case’ów
+```
+
+---
+
+## Dlaczego układ layer-first (a nie feature-first)?
+
+W tym repo użyłem układu warstwowego (layer-first: `data/`, `domain/`, `presentation/`) zamiast podziału per funkcjonalność (feature-first), ponieważ:
+
+- to mały projekt rekrutacyjny z dwiema głównymi funkcjami (Produkty, Zamówienie),
+- większość modeli/use-case’ów jest współdzielona (np. dopasowanie, formaty DTO), więc naturalnie lądują w odpowiednich warstwach,
+- prostsza nawigacja po kodzie dla recenzenta: wiadomo „gdzie szukać” rzeczy domenowych, repozytoriów czy widoków,
+- mniej narzutu na strukturę katalogów i konfigurację generatorów przy tak małej skali.
+
+Kiedy wybrałbym feature-first?
+
+- przy większej skali lub wielu niezależnych modułach (np. katalog, koszyk, checkout, profil),
+- gdy zespoły pracują równolegle nad oddzielnymi obszarami domeny i chcę maksymalnie izolować zależności,
+- aby łatwiej wdrażać granice modułów (testy, ownership, release’y) i skalować repo.
+
+Przykład projektu w układzie feature-first: [SimpleShop](https://github.com/Zalezny/SimpleShop) 
 
 ---
 
@@ -62,7 +123,6 @@ Minimalny przykładowy format (z repo jest dostępny plik `app_config.example.js
 		"model": "gpt-4.1-mini",
 		"input_prompt": "Zwróć tablicę JSON z polami name/quantity (lub nazwa/ilosc)",
 		"store": false,
-		"temperature": 1.0,
 		"top_p": 1.0
 	},
 	"matching": {
@@ -97,12 +157,12 @@ flutter run
 
 ## Obsługa i funkcje
 
+- Ekran „Produkty”: lista produktów z DummyJSON (limit 50) – zgodnie z wymaganiami projektu.
 - Ekran „Zamówienie”:
 	- wklejasz treść maila, klikasz „Analizuj zamówienie” – tekst idzie do AI,
 	- aplikacja parsuje listę pozycji (nazwa + ilość), dopasowuje do produktów i liczy sumy,
 	- wynik prezentowany jest w tabeli: „Nazwa produktu | Ilość | Cena jednostkowa | Suma”, z „Sumą całkowitą” poniżej.
-- Ekran „Produkty”: lista produktów z DummyJSON (limit 50) – zgodnie z wymaganiami projektu.
-- Eksport wyników: przycisk „Eksportuj” zapisuje plik JSON z listą pozycji oraz sumą całkowitą
+- Eksport wyników (po dokonanym zamówieniu): przycisk „Eksportuj” zapisuje plik JSON z listą pozycji oraz sumą całkowitą
 	- plik trafia do katalogu dokumentów aplikacji (path_provider), nazwa: `order_export_{timestamp}.json`.
 
 Przykładowy tekst zamówienia do wklejenia:
@@ -111,7 +171,7 @@ Przykładowy tekst zamówienia do wklejenia:
 
 ---
 
-## „Similarity-based matching” – jak dopasowujemy produkty
+## „Similarity-based matching” – jak dopasowywane są produkty
 
 Wdrożone dopasowywanie oparte jest na lekkim algorytmie podobieństwa tekstów:
 - Normalizacja: lower-case, usunięcie znaków specjalnych, tokenizacja na słowa.
@@ -122,18 +182,23 @@ Wdrożone dopasowywanie oparte jest na lekkim algorytmie podobieństwa tekstów:
 - Próg akceptacji (`matching.threshold`) kontroluje, kiedy produkt uznajemy za dopasowany; poniżej progu pozycja oznaczona jest jako „Niedopasowane”.
 
 Zalety: działa dobrze dla wariacji nazewnictwa (brand + model), jest szybkie i nie wymaga dodatkowych requestów.
+Minus: Pobranie wszystkich produktów (taka metoda jest dobra po stronie backendowej)
 
 ### Alternatywa: dopasowanie przez wyszukiwarkę produktów
 
-Prostszy (i również skuteczny) wariant polega na:
+Prostszy (i również skuteczny oraz optymalniejszy) wariant polega na:
 - odpytywaniu DummyJSON `/products/search?q={nazwa}` dla każdej rozpoznanej pozycji,
 - braniu zwróconych kandydatów i wybraniu najlepszego (np. po podobieństwie nazw lub prostszych regułach).
 
 Taki wariant bywa trafniejszy, bo zawęża kandydatów do sensownych produktów z API. W kodzie łatwo go dodać jako use-case i wywołać zamiast lub obok local-similarity (fallback).
 
+Minusem jest jednak że produkt musi mieć w 100% prawidłową nazwę by go wyszukało (co wyklucza możliwość wystąpienia literówki użytkownika, której nie wyłapał LLM)
+
 ---
 
 ## Testy i generatory kodu
+
+Aplikacja testowana na **Androidzie**
 
 Uruchamianie testów:
 ```bash
@@ -147,12 +212,25 @@ dart run build_runner build --delete-conflicting-outputs
 
 ---
 
-## FAQ / Troubleshooting
+## Co można jeszcze doimplementować
 
-- Brak klucza: aplikacja pokazuje komunikat „Brak klucza API AI…” i nie analizuje.
-- 401 z AI: najczęściej niepoprawny/odwołany klucz OpenAI – wygeneruj nowy i podmień w `app_config.json`.
-- Brak internetu/DNS: na Androidzie release pamiętaj o uprawnieniu INTERNET (jest dodane). Upewnij się, że emulator/urządzenie ma sieć.
-- AI zwróciło nieoczekiwany format: aplikacja filtruje odpowiedzi i oczekuje tablicy JSON (lista pozycji). Jeśli format będzie inny, zobaczysz komunikat o błędzie parsowania.
+- Filtry produktów na liście (po nazwie, cenie, producencie).
+- Debouncing i paginacja.
+- Dodatkowe formaty eksportu: CSV i PDF, plus udostępnianie pliku przez systemowy share sheet.
+- Lepsze UX stanów ładowania/błędów: animacje, pull-to-refresh, retry z backoffem.
+- Wielojęzyczność (EasyLocalization) i zebranie stringów w jednym miejscu: dodanie kolejnych języków i wygenerowanych kluczy, eliminacja hardcodów.
+- Testy:
+	- pokrycie Cubitów (bloc_test) i repozytoriów (mocktail),
+	- testy widgetów dla głównych ekranów,
+	- testy integracyjne flow „wklej → analizuj → dopasuj → eksportuj”.
+- CI/CD:
+	- pipeline (GitHub Actions) uruchamiający testy, codegen i lint,
+	- budowanie artefaktów na PR/release.
+- Optymalizacje wydajności:
+	- ograniczenie liczby rebuildów (select w BlocBuilder),
+	- memoizacja wyników podobieństwa dla tych samych fraz.
+- Motyw i dostępność: dark mode, większe czcionki, wsparcie screen reader.
+- konfiguracja pliku build.yaml pod utworzenie jednego folderu dla plików generowanych
 
 ---
 

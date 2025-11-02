@@ -12,29 +12,28 @@
 import 'package:dio/dio.dart' as _i361;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
-import 'package:lea_orders_ai/cubits/orders/order_cubit.dart' as _i376;
-import 'package:lea_orders_ai/cubits/products/products_cubit.dart' as _i92;
 import 'package:lea_orders_ai/data/datasources/remote/ai_api.dart' as _i882;
 import 'package:lea_orders_ai/data/datasources/remote/products_api.dart'
     as _i427;
 import 'package:lea_orders_ai/data/repositories/ai_repository_impl.dart'
     as _i102;
-import 'package:lea_orders_ai/data/repositories/file_export_repository_impl.dart'
-    as _i546;
 import 'package:lea_orders_ai/data/repositories/product_repository_impl.dart'
     as _i61;
 import 'package:lea_orders_ai/domain/repositories/ai_repository.dart' as _i988;
-import 'package:lea_orders_ai/domain/repositories/file_export_repository.dart'
-    as _i970;
 import 'package:lea_orders_ai/domain/repositories/product_repository.dart'
     as _i691;
-import 'package:lea_orders_ai/domain/usecases/export_order_result.dart'
-    as _i243;
+import 'package:lea_orders_ai/domain/usecases/build_order_result_json.dart'
+    as _i323;
 import 'package:lea_orders_ai/domain/usecases/fetch_products.dart' as _i312;
 import 'package:lea_orders_ai/domain/usecases/match_order_items.dart' as _i394;
 import 'package:lea_orders_ai/domain/usecases/parse_order_text.dart' as _i881;
 import 'package:lea_orders_ai/domain/usecases/search_products.dart' as _i465;
+import 'package:lea_orders_ai/presentation/cubits/orders/order_cubit.dart'
+    as _i686;
+import 'package:lea_orders_ai/presentation/cubits/products/products_cubit.dart'
+    as _i776;
 import 'package:lea_orders_ai/services/config_service.dart' as _i132;
+import 'package:lea_orders_ai/services/share_service.dart' as _i850;
 import 'package:lea_orders_ai/settings/app_module.dart' as _i645;
 import 'package:logger/logger.dart' as _i974;
 
@@ -46,22 +45,20 @@ extension GetItInjectableX on _i174.GetIt {
   }) {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     final appModule = _$AppModule();
+    gh.lazySingleton<_i323.BuildOrderResultJsonUseCase>(
+      () => _i323.BuildOrderResultJsonUseCase(),
+    );
     gh.lazySingleton<_i394.MatchOrderItemsUseCase>(
       () => _i394.MatchOrderItemsUseCase(),
     );
     gh.lazySingleton<_i132.ConfigService>(() => _i132.ConfigService());
+    gh.lazySingleton<_i850.ShareService>(() => _i850.ShareService());
     gh.lazySingleton<_i974.Logger>(() => appModule.logger());
     gh.lazySingleton<_i361.Dio>(() => appModule.dio(gh<_i974.Logger>()));
-    gh.lazySingleton<_i970.FileExportRepository>(
-      () => _i546.FileExportRepositoryImpl(),
-    );
     gh.lazySingleton<_i427.ProductsApi>(
       () => appModule.productsApi(gh<_i361.Dio>()),
     );
     gh.lazySingleton<_i882.AiApi>(() => appModule.aiApi(gh<_i361.Dio>()));
-    gh.lazySingleton<_i243.ExportOrderResultUseCase>(
-      () => _i243.ExportOrderResultUseCase(gh<_i970.FileExportRepository>()),
-    );
     gh.lazySingleton<_i988.AiRepository>(
       () =>
           _i102.AiRepositoryImpl(gh<_i882.AiApi>(), gh<_i132.ConfigService>()),
@@ -78,17 +75,18 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i465.SearchProductsUseCase>(
       () => _i465.SearchProductsUseCase(gh<_i691.ProductRepository>()),
     );
-    gh.factory<_i376.OrderCubit>(
-      () => _i376.OrderCubit(
+    gh.factory<_i686.OrderCubit>(
+      () => _i686.OrderCubit(
         gh<_i881.ParseOrderTextUseCase>(),
         gh<_i312.FetchProductsUseCase>(),
         gh<_i394.MatchOrderItemsUseCase>(),
-        gh<_i243.ExportOrderResultUseCase>(),
+        gh<_i323.BuildOrderResultJsonUseCase>(),
+        gh<_i850.ShareService>(),
         gh<_i132.ConfigService>(),
       ),
     );
-    gh.factory<_i92.ProductsCubit>(
-      () => _i92.ProductsCubit(
+    gh.factory<_i776.ProductsCubit>(
+      () => _i776.ProductsCubit(
         gh<_i312.FetchProductsUseCase>(),
         gh<_i465.SearchProductsUseCase>(),
       ),

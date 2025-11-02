@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../orders/orders_page.dart';
-import '../products/products_page.dart';
+import '../pages/orders/orders_page.dart';
+import '../pages/products/products_page.dart';
 
 class NavigationScaffold extends StatefulWidget {
   const NavigationScaffold({super.key});

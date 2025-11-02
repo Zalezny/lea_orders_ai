@@ -1,10 +1,10 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../domain/entities/matched_order_item.dart';
+import '../../../domain/entities/matched_order_item.dart';
 
 part 'order_state.freezed.dart';
 
-enum OrderUiStatus { empty, noApiKey, loading, success, partialSuccess, error }
+enum OrderUiStatus { empty, noApiKey, loading, success, partialSuccess, notFound, error }
 
 @freezed
 sealed class OrderState with _$OrderState {

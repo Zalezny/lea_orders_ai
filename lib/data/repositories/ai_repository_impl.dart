@@ -72,9 +72,7 @@ class AiRepositoryImpl implements AiRepository {
           }
         }
       }
-      if (items.isEmpty) {
-        return left(const ParsingFailure('Nie udało się sparsować żadnej pozycji z JSON.'));
-      }
+
       return right(items);
     } on DioException catch (e) {
       final status = e.response?.statusCode;

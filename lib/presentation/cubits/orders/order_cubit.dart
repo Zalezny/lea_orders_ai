@@ -1,14 +1,14 @@
-import 'dart:convert';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
-import '../../domain/entities/product.dart';
-import '../../domain/usecases/fetch_products.dart';
-import '../../domain/usecases/match_order_items.dart';
-import '../../domain/usecases/parse_order_text.dart';
-import '../../domain/usecases/export_order_result.dart';
-import '../../services/config_service.dart';
+import '../../../domain/entities/product.dart';
+import '../../../domain/usecases/fetch_products.dart';
+import '../../../domain/usecases/match_order_items.dart';
+import '../../../domain/usecases/parse_order_text.dart';
+import '../../../domain/usecases/build_order_result_json.dart';
+import '../../../services/config_service.dart';
+import '../../../services/share_service.dart';
 import 'order_state.dart';
 
 @injectable
@@ -16,10 +16,12 @@ class OrderCubit extends Cubit<OrderState> {
   final ParseOrderTextUseCase _parse;
   final FetchProductsUseCase _fetchProducts;
   final MatchOrderItemsUseCase _match;
-  final ExportOrderResultUseCase _export;
+  final BuildOrderResultJsonUseCase _buildJson;
+  final ShareService _shareService;
   final ConfigService _config;
 
-  OrderCubit(this._parse, this._fetchProducts, this._match, this._export, this._config) : super(const OrderState());
+  OrderCubit(this._parse, this._fetchProducts, this._match, this._buildJson, this._shareService, this._config)
+    : super(const OrderState());
 
   Future<void> init() async {
     final key = await _config.openAIApiKey;
@@ -56,6 +58,12 @@ class OrderCubit extends Cubit<OrderState> {
     }
     final parsed = parsedRes.getOrElse(() => const []);
 
+    // If AI returned an empty list, show a friendly not-found state instead of error
+    if (parsed.isEmpty) {
+      emit(state.copyWith(status: OrderUiStatus.notFound, items: const [], total: 0));
+      return;
+    }
+
     // Step 2: fetch products
     final prodsRes = await _fetchProducts(limit: 999);
     if (prodsRes.isLeft()) {
@@ -90,29 +98,17 @@ class OrderCubit extends Cubit<OrderState> {
     emit(const OrderState(status: OrderUiStatus.empty));
   }
 
-  Future<String> exportJson() async {
-    final items = state.items;
-
-    final encoded = jsonEncode(
-      items
-          .map(
-            (i) => {
-              'productName': i.product?.title ?? i.originalName,
-              'quantity': i.quantity,
-              'unitPrice': i.unitPrice,
-              'total': i.lineTotal,
-              'status': i.product == null ? 'unmatched' : (i.score < 0.7 ? 'partial' : 'matched'),
-            },
-          )
-          .toList(),
-    );
-    return encoded;
+  /// Returns to edit mode keeping the previously entered input text.
+  void backToEdit() {
+    emit(state.copyWith(status: OrderUiStatus.empty));
   }
 
-  /// Exports current result to a JSON file via domain use case. Returns file path or null on failure.
-  Future<String?> exportToFile() async {
-    if (state.items.isEmpty) return null;
-    final res = await _export(items: state.items, total: state.total);
-    return res.fold((_) => null, (path) => path);
+  /// Builds JSON in-memory and opens the platform share sheet.
+  Future<void> shareResultJson() async {
+    if (state.items.isEmpty) return;
+    final content = _buildJson(items: state.items, total: state.total);
+    final ts = DateTime.now().toIso8601String().replaceAll(':', '-').replaceAll('.', '-');
+    final name = 'order_export_$ts.json';
+    await _shareService.shareJson(jsonContent: content, fileName: name);
   }
 }

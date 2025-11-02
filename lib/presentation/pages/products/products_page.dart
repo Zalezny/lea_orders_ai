@@ -3,11 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubits/products/products_cubit.dart';
 import '../../cubits/products/products_state.dart';
-import '../../settings/injection.dart';
+import '../../../settings/injection.dart';
 import 'widgets/product_card.dart';
 import 'widgets/product_skeleton.dart';
-import '../common/error_state.dart';
-import '../common/empty_search_state.dart';
+import '../../common/error_state.dart';
+import '../../common/empty_search_state.dart';
 
 class ProductsPage extends StatelessWidget {
   const ProductsPage({super.key});
@@ -38,8 +38,7 @@ class _ProductsViewState extends State<_ProductsView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: Theme.brightnessOf(context) == Brightness.dark ? Colors.black : Colors.white,
         elevation: 0,
         centerTitle: true,
         title: Text(
