@@ -4,7 +4,7 @@ Aplikacja mobilna Flutter, która:
 - pobiera i wyświetla listę produktów z DummyJSON,
 - pozwala wkleić „mail z zamówieniem” i analizuje go przez AI (OpenAI Responses API),
 - dopasowuje rozpoznane pozycje do produktów i liczy sumy pozycji + sumę całkowitą,
-- prezentuje wynik w czytelnej tabeli i umożliwia eksport wyników do pliku JSON.
+- prezentuje wynik w czytelnej tabeli (lub listy) i umożliwia eksport wyników do pliku JSON.
 
 ---
 
@@ -19,7 +19,6 @@ Aplikacja mobilna Flutter, która:
 - „Similarity-based matching” (opis algorytmu) + alternatywa „search-backed”
 - Testy i generatory kodu
 - Co można jeszcze doimplementować
-- FAQ / Troubleshooting
 
 ---
 
