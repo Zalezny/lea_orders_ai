@@ -11,7 +11,6 @@ part of 'ai_response_dto.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-
 /// @nodoc
 mixin _$AiResponseDto {
 
@@ -22,8 +21,6 @@ mixin _$AiResponseDto {
 @pragma('vm:prefer-inline')
 $AiResponseDtoCopyWith<AiResponseDto> get copyWith => _$AiResponseDtoCopyWithImpl<AiResponseDto>(this as AiResponseDto, _$identity);
 
-  /// Serializes this AiResponseDto to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -31,7 +28,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is AiResponseDto&&const DeepCollectionEquality().equals(other.output, output));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(output));
 
@@ -200,11 +197,11 @@ return $default(_that.output);case _:
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _AiResponseDto implements AiResponseDto {
   const _AiResponseDto({required final  List<AiOutputMessageDto> output}): _output = output;
-  factory _AiResponseDto.fromJson(Map<String, dynamic> json) => _$AiResponseDtoFromJson(json);
+  
 
  final  List<AiOutputMessageDto> _output;
 @override List<AiOutputMessageDto> get output {
@@ -220,17 +217,14 @@ class _AiResponseDto implements AiResponseDto {
 @pragma('vm:prefer-inline')
 _$AiResponseDtoCopyWith<_AiResponseDto> get copyWith => __$AiResponseDtoCopyWithImpl<_AiResponseDto>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$AiResponseDtoToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _AiResponseDto&&const DeepCollectionEquality().equals(other._output, _output));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_output));
 

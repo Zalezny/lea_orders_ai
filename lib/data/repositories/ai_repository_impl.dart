@@ -34,13 +34,7 @@ class AiRepositoryImpl implements AiRepository {
         return left(ConfigFailure(e.message));
       }
 
-      final body = <String, dynamic>{
-        'model': ai.model,
-        'input': '${ai.inputPrompt}\n\n$text',
-        'store': ai.store,
-        'temperature': ai.temperature,
-        'top_p': ai.topP,
-      };
+      final body = <String, dynamic>{'model': ai.model, 'input': '${ai.inputPrompt}\n\n$text', 'store': ai.store, 'top_p': ai.topP};
 
       final AiResponseDto resp = await _api.createResponse(body, authorization: 'Bearer $key');
 
@@ -58,8 +52,21 @@ class AiRepositoryImpl implements AiRepository {
       for (final e in decoded) {
         if (e is Map<String, dynamic>) {
           try {
-            final dto = OrderItemAiDto.fromJson(e);
-            items.add(dto.toEntity());
+            // Accept both English and legacy Polish keys from the AI output
+            final normalized = <String, dynamic>{'name': e['name'] ?? e['nazwa'], 'quantity': e['quantity'] ?? e['ilosc']};
+
+            // Coerce numeric strings to int where needed
+            final q = normalized['quantity'];
+            if (q is String) {
+              final qi = int.tryParse(q);
+              if (qi != null) normalized['quantity'] = qi;
+            }
+
+            // Only parse if required fields are present
+            if (normalized['name'] != null && normalized['quantity'] != null) {
+              final dto = OrderItemAiDto.fromJson(normalized);
+              items.add(dto.toEntity());
+            }
           } catch (_) {
             // ignore malformed entry, we will fail if none parsed
           }
@@ -77,7 +84,7 @@ class AiRepositoryImpl implements AiRepository {
       return left(DioErrorMapper.map(e));
     } on ConfigException catch (e) {
       return left(ConfigFailure(e.message));
-    } catch (_) {
+    } catch (e) {
       return left(const UnknownFailure('Coś poszło nie tak podczas analizy AI'));
     }
   }
