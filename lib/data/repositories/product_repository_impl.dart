@@ -27,4 +27,17 @@ class ProductRepositoryImpl implements ProductRepository {
       return left(const UnknownFailure('Coś poszło nie tak'));
     }
   }
+
+  @override
+  Future<Either<Failure, List<Product>>> searchProducts({required String query, int limit = 50}) async {
+    try {
+      final response = await _api.searchProducts(query: query, limit: limit);
+      final products = response.products.map((e) => e.toEntity()).toList();
+      return right(products);
+    } on DioException catch (e) {
+      return left(DioErrorMapper.map(e));
+    } catch (_) {
+      return left(const UnknownFailure('Coś poszło nie tak'));
+    }
+  }
 }

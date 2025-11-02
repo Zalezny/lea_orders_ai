@@ -11,4 +11,7 @@ abstract class ProductsApi {
 
   @GET('/products')
   Future<ProductsResponseDto> getProducts({@Query('limit') int limit = 50});
+
+  @GET('/products/search')
+  Future<ProductsResponseDto> searchProducts({@Query('q') required String query, @Query('limit') int limit = 50});
 }

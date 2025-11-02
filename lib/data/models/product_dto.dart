@@ -6,6 +6,7 @@ part 'product_dto.freezed.dart';
 part 'product_dto.g.dart';
 
 @freezed
+@freezed
 sealed class ProductDto with _$ProductDto {
   const factory ProductDto({required int id, required String title, required num price, String? thumbnail}) = _ProductDto;
 
