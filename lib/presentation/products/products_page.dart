@@ -4,6 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../cubits/products/products_cubit.dart';
 import '../../cubits/products/products_state.dart';
 import '../../settings/injection.dart';
+import 'widgets/product_card.dart';
+import 'widgets/product_skeleton.dart';
+import '../common/error_state.dart';
+import '../common/empty_search_state.dart';
 
 class ProductsPage extends StatelessWidget {
   const ProductsPage({super.key});
@@ -33,7 +37,16 @@ class _ProductsViewState extends State<_ProductsView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Products')),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        title: Text(
+          'Produkty',
+          style: TextStyle(fontWeight: FontWeight.w700, color: Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
+        ),
+      ),
       body: Column(
         children: [
           Padding(
@@ -46,19 +59,33 @@ class _ProductsViewState extends State<_ProductsView> {
                     textInputAction: TextInputAction.search,
                     decoration: InputDecoration(
                       hintText: 'Szukaj produktów…',
-                      prefixIcon: const Icon(Icons.search),
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _controller.clear();
-                          context.read<ProductsCubit>().load();
-                        },
+                      prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+                      suffixIcon: _controller.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.close),
+                              color: Colors.grey.shade600,
+                              onPressed: () {
+                                setState(() => _controller.clear());
+                                context.read<ProductsCubit>().load();
+                              },
+                            )
+                          : null,
+                      filled: true,
+                      fillColor: const Color(0xFFF7F9FC),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(28),
+                        borderSide: BorderSide(color: Colors.grey.shade200),
                       ),
-                      border: const OutlineInputBorder(),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(28),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
                     ),
                     onSubmitted: (value) {
                       context.read<ProductsCubit>().search(value);
                     },
+                    onChanged: (value) => setState(() {}),
                   ),
                 ),
               ],
@@ -68,34 +95,42 @@ class _ProductsViewState extends State<_ProductsView> {
             child: BlocBuilder<ProductsCubit, ProductsState>(
               builder: (context, state) {
                 if (state.isLoading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    itemBuilder: (_, __) => const ProductSkeleton(),
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemCount: 6,
+                  );
                 }
                 if (state.failure != null) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Text(state.failure!.message, textAlign: TextAlign.center),
-                    ),
+                  return ErrorState(
+                    onRetry: () {
+                      final q = _controller.text.trim();
+                      if (q.isEmpty) {
+                        context.read<ProductsCubit>().load();
+                      } else {
+                        context.read<ProductsCubit>().search(q);
+                      }
+                    },
                   );
                 }
                 final items = state.items;
                 if (items.isEmpty) {
+                  if (_controller.text.trim().isNotEmpty) {
+                    return const EmptySearchState();
+                  }
                   return const Center(child: Text('Brak produktów'));
                 }
                 return RefreshIndicator(
                   onRefresh: () => context.read<ProductsCubit>().refresh(),
                   child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     itemCount: items.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final p = items[index];
-                      return ListTile(
-                        leading: p.thumbnail != null
-                            ? Image.network(p.thumbnail!, width: 48, height: 48, fit: BoxFit.cover)
-                            : const Icon(Icons.image_not_supported),
-                        title: Text(p.title),
-                        subtitle: Text(p.price.toStringAsFixed(2)),
-                      );
+                      return ProductCard(product: p);
                     },
                   ),
                 );

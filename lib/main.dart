@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lea_orders_ai/presentation/products/products_page.dart';
+import 'package:lea_orders_ai/presentation/navigation/navigation_scaffold.dart';
 import 'settings/injection.dart';
 
 void main() {
@@ -15,9 +15,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
-      home: const ProductsPage(),
+      title: 'Lea Orders AI',
+      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal), useMaterial3: false),
+      home: const NavigationScaffold(),
     );
   }
 }
